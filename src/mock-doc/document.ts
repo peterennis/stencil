@@ -42,6 +42,13 @@ export class MockDocument extends MockHTMLElement {
     }
   }
 
+  get dir() {
+    return this.documentElement.dir;
+  }
+  set dir(value: string) {
+    this.documentElement.dir = value;
+  }
+
   get location() {
     if (this.defaultView != null) {
       return (this.defaultView as Window).location;
@@ -252,7 +259,7 @@ export function resetDocument(doc: Document) {
       for (let i = 0, ii = documentElement.childNodes.length; i < ii; i++) {
         const childNode = documentElement.childNodes[i];
         resetElement(childNode as any);
-        childNode.childNodes.length = 0;
+        (childNode.childNodes as any).length = 0;
       }
     }
 
