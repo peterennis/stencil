@@ -6,7 +6,6 @@ import { BuildOptions } from './utils/options';
 import {
   isValidVersionInput,
   SEMVER_INCREMENTS,
-  isVersionGreater,
   isPrereleaseVersion,
   updateChangeLog,
   postGithubRelease,
@@ -15,7 +14,12 @@ import { validateBuild } from './test/validate-build';
 import { createLicense } from './license';
 import { bundleBuild } from './build';
 
-export function runReleaseTasks(opts: BuildOptions, args: string[]) {
+/**
+ * Runs a litany of tasks used to ensure a safe release of a new version of Stencil
+ * @param opts build options containing the metadata needed to release a new version of Stencil
+ * @param args stringified arguments used to influence the release steps that are taken
+ */
+export function runReleaseTasks(opts: BuildOptions, args: ReadonlyArray<string>): void {
   const rootDir = opts.rootDir;
   const pkg = opts.packageJson;
   const tasks: ListrTask[] = [];
@@ -58,11 +62,14 @@ export function runReleaseTasks(opts: BuildOptions, args: string[]) {
       title: 'Check git tag existence',
       task: () =>
         execa('git', ['fetch'])
+          // Retrieve the prefix for a version string - https://docs.npmjs.com/cli/v7/using-npm/config#tag-version-prefix
           .then(() => execa('npm', ['config', 'get', 'tag-version-prefix']))
           .then(
             ({ stdout }) => (tagPrefix = stdout),
             () => {}
           )
+          // verify that a tag for the new version string does not already exist by checking the output of
+          // `git rev-parse --verify`
           .then(() => execa('git', ['rev-parse', '--quiet', '--verify', `refs/tags/${tagPrefix}${newVersion}`]))
           .then(
             ({ stdout }) => {
@@ -84,8 +91,8 @@ export function runReleaseTasks(opts: BuildOptions, args: string[]) {
       title: 'Check current branch',
       task: () =>
         execa('git', ['symbolic-ref', '--short', 'HEAD']).then(({ stdout }) => {
-          if (stdout !== 'master' && !isAnyBranch) {
-            throw new Error('Not on `master` branch. Use --any-branch to publish anyway.');
+          if (stdout !== 'main' && !isAnyBranch) {
+            throw new Error('Not on `main` branch. Use --any-branch to publish anyway.');
           }
         }),
       skip: () => isDryRun,
@@ -119,7 +126,7 @@ export function runReleaseTasks(opts: BuildOptions, args: string[]) {
         task: () => execa('npm', ['ci'], { cwd: rootDir }),
       },
       {
-        title: `Transpile ${color.dim('(tsc.prod)')}`,
+        title: `Transpile Stencil ${color.dim('(tsc.prod)')}`,
         task: () => execa('npm', ['run', 'tsc.prod'], { cwd: rootDir }),
       },
       {
@@ -144,14 +151,9 @@ export function runReleaseTasks(opts: BuildOptions, args: string[]) {
       },
       {
         title: `Set package.json version to ${color.bold.yellow(opts.version)}`,
-        task: () => {
-          const packageJson = JSON.parse(fs.readFileSync(opts.packageJsonPath, 'utf8'));
-          packageJson.version = opts.version;
-          fs.writeFileSync(opts.packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
-
-          const packageLockJson = JSON.parse(fs.readFileSync(opts.packageLockJsonPath, 'utf8'));
-          packageLockJson.version = opts.version;
-          fs.writeFileSync(opts.packageLockJsonPath, JSON.stringify(packageLockJson, null, 2) + '\n');
+        task: async () => {
+          // use `--no-git-tag-version` to ensure that the tag for the release is not prematurely created
+          await execa('npm', ['version', '--no-git-tag-version', opts.version], { cwd: rootDir });
         },
       },
       {
@@ -198,7 +200,7 @@ export function runReleaseTasks(opts: BuildOptions, args: string[]) {
           if (isDryRun) {
             return console.log(`[dry-run] ${cmd} ${cmdArgs.join(' ')}`);
           }
-          return execa('git', cmdArgs, { cwd: rootDir });
+          return execa(cmd, cmdArgs, { cwd: rootDir });
         },
       },
       {
@@ -210,7 +212,7 @@ export function runReleaseTasks(opts: BuildOptions, args: string[]) {
           if (isDryRun) {
             return console.log(`[dry-run] ${cmd} ${cmdArgs.join(' ')}`);
           }
-          return execa('git', cmdArgs, { cwd: rootDir });
+          return execa(cmd, cmdArgs, { cwd: rootDir });
         },
       }
     );
@@ -219,13 +221,13 @@ export function runReleaseTasks(opts: BuildOptions, args: string[]) {
       tasks.push({
         title: 'Also set "next" npm tag on @stencil/core',
         task: () => {
-          const cmd = 'git';
+          const cmd = 'npm';
           const cmdArgs = ['dist-tag', 'add', '@stencil/core@' + opts.version, 'next'];
 
           if (isDryRun) {
             return console.log(`[dry-run] ${cmd} ${cmdArgs.join(' ')}`);
           }
-          return execa('npm', cmdArgs, { cwd: rootDir });
+          return execa(cmd, cmdArgs, { cwd: rootDir });
         },
       });
     }

@@ -12,6 +12,7 @@ import { cpus, freemem, platform, release, tmpdir, totalmem } from 'os';
 import { createHash } from 'crypto';
 import exit from 'exit';
 import fs from 'graceful-fs';
+import { parse as parseYarnLockFile } from '@yarnpkg/lockfile';
 import { isFunction, isPromise, normalizePath } from '@utils';
 import { NodeLazyRequire } from './node-lazy-require';
 import { NodeResolveModule } from './node-resolve-module';
@@ -256,6 +257,9 @@ export function createNodeSys(c: { process?: any } = {}) {
         });
       });
     },
+    parseYarnLockFile(content: string) {
+      return parseYarnLockFile(content);
+    },
     isTTY() {
       return !!process?.stdout?.isTTY;
     },
@@ -430,7 +434,7 @@ export function createNodeSys(c: { process?: any } = {}) {
         const tsFileWatcher = tsSysWatchDirectory(
           p,
           (fileName) => {
-            callback(normalizePath(fileName), null);
+            callback(normalizePath(fileName), 'fileUpdate');
           },
           recursive
         );

@@ -9,13 +9,18 @@ import { internal } from './bundles/internal';
 import { mockDoc } from './bundles/mock-doc';
 import { release } from './release';
 import { screenshot } from './bundles/screenshot';
-import { sysDeno } from './bundles/sys-deno';
 import { sysNode, sysNodeExternalBundles } from './bundles/sys-node';
 import { testing } from './bundles/testing';
 import { validateBuild } from './test/validate-build';
 import { rollup } from 'rollup';
+import type { RollupOptions } from 'rollup';
 
-export async function run(rootDir: string, args: string[]) {
+/**
+ * Runner for releasing a new version of Stencil
+ * @param rootDir the root directory of the Stencil repository
+ * @param args stringifed arguments that influence the release process
+ */
+export async function run(rootDir: string, args: ReadonlyArray<string>): Promise<void> {
   try {
     if (args.includes('--release')) {
       await release(rootDir, args);
@@ -34,14 +39,18 @@ export async function run(rootDir: string, args: string[]) {
   }
 }
 
-export async function createBuild(opts: BuildOptions) {
+/**
+ * Build the rollup configuration for each submodule of the project
+ * @param opts build options to be used as a part of the configuration generation
+ * @returns the rollup configurations used to build each of the project's major submodules
+ */
+export async function createBuild(opts: BuildOptions): Promise<readonly RollupOptions[]> {
   await Promise.all([
     emptyDir(opts.output.cliDir),
     emptyDir(opts.output.compilerDir),
     emptyDir(opts.output.devServerDir),
     emptyDir(opts.output.internalDir),
     emptyDir(opts.output.mockDocDir),
-    emptyDir(opts.output.sysDenoDir),
     emptyDir(opts.output.sysNodeDir),
     emptyDir(opts.output.testingDir),
     updateDependenciesJson(opts),
@@ -57,14 +66,17 @@ export async function createBuild(opts: BuildOptions) {
     mockDoc(opts),
     screenshot(opts),
     testing(opts),
-    sysDeno(opts),
     sysNode(opts),
   ]);
 
   return bundles.flat();
 }
 
-export async function bundleBuild(opts: BuildOptions) {
+/**
+ * Initiates writing bundled Stencil submodules to disk
+ * @param opts build options to be used to generate the underlying rollup configuration
+ */
+export async function bundleBuild(opts: BuildOptions): Promise<void> {
   const bundles = await createBuild(opts);
 
   await Promise.all(
