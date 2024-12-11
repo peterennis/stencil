@@ -1,21 +1,21 @@
+import { MockAttr } from './attribute';
 import { MockComment } from './comment-node';
 import { NODE_NAMES, NODE_TYPES } from './constants';
 import { MockDocumentFragment } from './document-fragment';
 import { MockDocumentTypeNode } from './document-type-node';
-import { MockElement, MockHTMLElement, MockTextNode, resetElement } from './node';
-import { MockBaseElement, createElement, createElementNS } from './element';
-import { parseDocumentUtil } from './parse-util';
-import { parseHtmlToFragment } from './parse-html';
+import { createElement, createElementNS, MockBaseElement } from './element';
 import { resetEventListeners } from './event';
+import { MockElement, MockHTMLElement, MockTextNode, resetElement } from './node';
+import { parseHtmlToFragment } from './parse-html';
+import { parseDocumentUtil } from './parse-util';
 import { MockWindow } from './window';
-import { MockAttr } from './attribute';
 
 export class MockDocument extends MockHTMLElement {
   defaultView: any;
   cookie: string;
   referrer: string;
 
-  constructor(html: string | boolean = null, win: any = null) {
+  constructor(html: string | boolean | null = null, win: any = null) {
     super(null, null);
     this.nodeName = NODE_NAMES.DOCUMENT_NODE;
     this.nodeType = NODE_TYPES.DOCUMENT_NODE;
@@ -42,11 +42,15 @@ export class MockDocument extends MockHTMLElement {
     }
   }
 
-  get dir() {
+  override get dir() {
     return this.documentElement.dir;
   }
-  set dir(value: string) {
+  override set dir(value: string) {
     this.documentElement.dir = value;
+  }
+
+  override get localName(): never {
+    throw new Error('Unimplemented');
   }
 
   get location() {
@@ -166,7 +170,7 @@ export class MockDocument extends MockHTMLElement {
     }
   }
 
-  appendChild(newNode: MockElement) {
+  override appendChild(newNode: MockElement) {
     newNode.remove();
     newNode.parentNode = this;
     this.childNodes.push(newNode);
@@ -198,7 +202,6 @@ export class MockDocument extends MockHTMLElement {
 
   createElementNS(namespaceURI: string, tagName: string) {
     const elmNs = createElementNS(this, namespaceURI, tagName);
-    elmNs.namespaceURI = namespaceURI;
     return elmNs;
   }
 
@@ -222,14 +225,14 @@ export class MockDocument extends MockHTMLElement {
     return getElementsByName(this, elmName.toLowerCase());
   }
 
-  get title() {
+  override get title() {
     const title = this.head.childNodes.find((elm) => elm.nodeName === 'TITLE') as MockElement;
     if (title != null && typeof title.textContent === 'string') {
       return title.textContent.trim();
     }
     return '';
   }
-  set title(value: string) {
+  override set title(value: string) {
     const head = this.head;
     let title = head.childNodes.find((elm) => elm.nodeName === 'TITLE') as MockElement;
     if (title == null) {

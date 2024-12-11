@@ -1,5 +1,5 @@
-import { newSpecPage } from '@stencil/core/testing';
 import { Component, h } from '@stencil/core';
+import { newSpecPage } from '@stencil/core/testing';
 
 @Component({
   tag: 'cmp-a',
@@ -84,16 +84,16 @@ describe('shadow', () => {
     });
 
     const expected = `
-    <cmp-a class="hydrated sc-cmp-a-h">
+    <cmp-a class="hydrated">
       <!---->
-      <div class="sc-cmp-a sc-cmp-a-s">
+      <div>
         <span slot=\"start\">
           Start
         </span>
-        <span class='sc-cmp-a sc-cmp-a-s'>
+        <span>
           Text
         </span>
-        <div class='end sc-cmp-a sc-cmp-a-s'>
+        <div class="end">
           <span slot=\"end\">
             End
           </span>

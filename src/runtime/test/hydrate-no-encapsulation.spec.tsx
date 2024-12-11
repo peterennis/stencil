@@ -1,4 +1,4 @@
-import { Component, Host, h } from '@stencil/core';
+import { Component, h, Host } from '@stencil/core';
 import { newSpecPage } from '@stencil/core/testing';
 
 describe('hydrate no encapsulation', () => {
@@ -13,7 +13,6 @@ describe('hydrate no encapsulation', () => {
         );
       }
     }
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA],
       html: `<cmp-a></cmp-a>`,
@@ -38,7 +37,6 @@ describe('hydrate no encapsulation', () => {
         );
       }
     }
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA],
       html: `<cmp-a></cmp-a>`,
@@ -54,7 +52,6 @@ describe('hydrate no encapsulation', () => {
       </cmp-a>
     `);
 
-    // @ts-ignore
     const clientHydrated = await newSpecPage({
       components: [CmpA],
       html: serverHydrated.root.outerHTML,
@@ -81,7 +78,6 @@ describe('hydrate no encapsulation', () => {
         return <Host>Hello</Host>;
       }
     }
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA],
       html: `<cmp-a></cmp-a>`,
@@ -95,7 +91,6 @@ describe('hydrate no encapsulation', () => {
       </cmp-a>
     `);
 
-    // @ts-ignore
     const clientHydrated = await newSpecPage({
       components: [CmpA],
       html: serverHydrated.root.outerHTML,
@@ -126,7 +121,6 @@ describe('hydrate no encapsulation', () => {
         );
       }
     }
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA],
       html: `<cmp-a></cmp-a>`,
@@ -146,7 +140,6 @@ describe('hydrate no encapsulation', () => {
       </cmp-a>
     `);
 
-    // @ts-ignore
     const clientHydrated = await newSpecPage({
       components: [CmpA],
       html: serverHydrated.root.outerHTML,
@@ -162,6 +155,65 @@ describe('hydrate no encapsulation', () => {
           middle
         </p>
         bottom
+      </cmp-a>
+    `);
+  });
+
+  it('nested text slot with key', async () => {
+    @Component({ tag: 'cmp-a' })
+    class CmpA {
+      render() {
+        return (
+          <Host key="test">
+            <cmp-b key="my-test-key">light-dom</cmp-b>
+          </Host>
+        );
+      }
+    }
+    @Component({ tag: 'cmp-b' })
+    class CmpB {
+      render() {
+        return (
+          <Host>
+            <slot key="key1"></slot>
+            <footer key="key2"></footer>
+          </Host>
+        );
+      }
+    }
+    const serverHydrated = await newSpecPage({
+      components: [CmpA, CmpB],
+      html: `<cmp-a></cmp-a>`,
+      hydrateServerSide: true,
+    });
+    expect(serverHydrated.root).toEqualHtml(`
+      <cmp-a class="hydrated" s-id="1">
+        <!--r.1-->
+        <cmp-b class="hydrated" c-id="1.0.0.0" s-id="2">
+          <!--r.2-->
+          <!--o.1.1-->
+          <!--s.2.0.0.0.-->
+          <!--t.1.1.1.0-->
+          light-dom
+          <footer c-id="2.1.0.1"></footer>
+        </cmp-b>
+      </cmp-a>
+    `);
+
+    const clientHydrated = await newSpecPage({
+      components: [CmpA, CmpB],
+      html: serverHydrated.root.outerHTML,
+      hydrateClientSide: true,
+    });
+
+    expect(clientHydrated.root).toEqualHtml(`
+      <cmp-a class="hydrated">
+        <!--r.1-->
+        <cmp-b class="hydrated">
+          <!--r.2-->
+          light-dom
+          <footer></footer>
+        </cmp-b>
       </cmp-a>
     `);
   });
@@ -188,7 +240,6 @@ describe('hydrate no encapsulation', () => {
         );
       }
     }
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: `<cmp-a></cmp-a>`,
@@ -208,7 +259,6 @@ describe('hydrate no encapsulation', () => {
       </cmp-a>
     `);
 
-    // @ts-ignore
     const clientHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: serverHydrated.root.outerHTML,
@@ -220,8 +270,6 @@ describe('hydrate no encapsulation', () => {
         <!--r.1-->
         <cmp-b class="hydrated">
           <!--r.2-->
-          <!---->
-          <!--s.2.0.0.0.-->
           light-dom
           <footer></footer>
         </cmp-b>
@@ -252,7 +300,6 @@ describe('hydrate no encapsulation', () => {
       }
     }
 
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: `<cmp-a></cmp-a>`,
@@ -272,7 +319,6 @@ describe('hydrate no encapsulation', () => {
       </cmp-a>
     `);
 
-    // @ts-ignore
     const clientHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: serverHydrated.root.outerHTML,
@@ -284,9 +330,7 @@ describe('hydrate no encapsulation', () => {
         <!--r.1-->
         <cmp-b class="hydrated">
           <!--r.2-->
-          <!---->
           <header></header>
-          <!--s.2.1.0.1.-->
           light-dom
         </cmp-b>
       </cmp-a>
@@ -316,7 +360,6 @@ describe('hydrate no encapsulation', () => {
         );
       }
     }
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: `<cmp-a></cmp-a>`,
@@ -337,7 +380,6 @@ describe('hydrate no encapsulation', () => {
       </cmp-a>
     `);
 
-    // @ts-ignore
     const clientHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: serverHydrated.root.outerHTML,
@@ -349,9 +391,7 @@ describe('hydrate no encapsulation', () => {
         <!--r.1-->
         <cmp-b class="hydrated">
           <!--r.2-->
-          <!---->
           <header></header>
-          <!--s.2.1.0.1.-->
           light-dom
           <footer></footer>
         </cmp-b>
@@ -388,7 +428,6 @@ describe('hydrate no encapsulation', () => {
         );
       }
     }
-    // @ts-ignore
     const serverHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: `<cmp-a></cmp-a>`,
@@ -421,7 +460,6 @@ describe('hydrate no encapsulation', () => {
       </cmp-a>
     `);
 
-    // @ts-ignore
     const clientHydrated = await newSpecPage({
       components: [CmpA, CmpB],
       html: serverHydrated.root.outerHTML,
@@ -433,15 +471,11 @@ describe('hydrate no encapsulation', () => {
         <!--r.1-->
         <cmp-b class="hydrated">
           <!--r.2-->
-          <!---->
-          <!---->
-          <!---->
           <header></header>
           <!--s.2.1.0.1.top-->
           <div slot="top">
             top light-dom
           </div>
-          <!--s.2.2.0.2.-->
           middle light-dom
           <!--s.2.3.0.3.bottom-->
           <div slot="bottom">
